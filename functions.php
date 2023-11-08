@@ -1,15 +1,18 @@
 <?php
-// functions.php
 
-function isValidRecipe(array $recipe) : bool
+function display_recipe(array $recipe) : string
 {
-    if (array_key_exists('is_enabled', $recipe)) {
-        $isEnabled = $recipe['is_enabled'];
-    } else {
-        $isEnabled = false;
-    }
+    $recipe_content = '';
 
-    return $isEnabled;
+    if ($recipe['is_enabled']) {
+        $recipe_content = '<article>';
+        $recipe_content .= '<h3>' . $recipe['title'] . '</h3>';
+        $recipe_content .= '<div>' . $recipe['recipe'] . '</div>';
+        $recipe_content .= '<i>' . $recipe['author'] . '</i>';
+        $recipe_content .= '</article>';
+    }
+    
+    return $recipe_content;
 }
 
 function displayAuthor(string $authorEmail, array $users) : string
@@ -22,13 +25,19 @@ function displayAuthor(string $authorEmail, array $users) : string
     }
 }
 
-function getRecipes(array $recipes) : array
+function getRecipes(array $recipes, int $limit) : array
 {
     $validRecipes = [];
+    $counter =0;
 
     foreach($recipes as $recipe) {
-        if (isValidRecipe($recipe)) {
-            $validRecipes[] = $recipe;
+        if ($counter == $limit) {
+            return $validRecipes;
+        }
+
+        if ($recipe['is_enabled']) {
+            $valid_recipes[] = $recipe;
+            $counter++;
         }
     }
 
