@@ -1,29 +1,53 @@
 <?php
 
-// Soumission du formulaire
-if (isset($_POST['email']) &&  isset($_POST['password'])) {
-    
+$postData = $_POST;
+
+if (isset($postData['email']) &&  isset($postData['password'])) {
     foreach ($users as $user) {
         if (
-            $user['email'] === $_POST['email'] &&
-            $user['password'] === $_POST['password']
+            $user['email'] === $postData['email'] &&
+            $user['password'] === $postData['password']
         ) {
-            // Enregistrement de l'email de l'utilisateur en session
-            $_SESSION['LOGGED_USER'] = $user['email'];
+            $loggedUser = [
+                'email' => $user['email'],
+            ];
+
+            /**
+             * Cookie qui expire dans un an
+             */
+            setcookie(
+                'LOGGED_USER',
+                $loggedUser['email'],
+                [
+                    'expires' => time() + 365*24*3600,
+                    'secure' => true,
+                    'httponly' => true,
+                ]
+            );
+
+            $_SESSION['LOGGED_USER'] = $loggedUser['email'];
+        } else {
+            $errorMessage = sprintf('Les informations envoyées ne permettent pas de vous identifier : (%s/%s)',
+                $postData['email'],
+                $postData['password']
+            );
         }
     }
 }
+
+// Si le cookie ou la session sont présentes
+if (isset($_COOKIE['LOGGED_USER']) || isset($_SESSION['LOGGED_USER'])) {
+    $loggedUser = [
+        'email' => $_COOKIE['LOGGED_USER'] ?? $_SESSION['LOGGED_USER'],
+    ];
+}
 ?>
 
-<!--
-   Si utilisateur/trice est non identifié(e), on affiche le formulaire
--->
-<?php if(!isset($_SESSION['LOGGED_USER'])): ?>
-
-    <form action="home.php" method="post">
+<?php if(!isset($loggedUser)): ?>
+<form action="home.php" method="post">
     <?php if(isset($errorMessage)) : ?>
         <div class="alert alert-danger" role="alert">
-            <?php echo $errorMessage; ?>
+            <?php echo($errorMessage); ?>
         </div>
     <?php endif; ?>
     <div class="mb-3">
@@ -37,12 +61,8 @@ if (isset($_POST['email']) &&  isset($_POST['password'])) {
     </div>
     <button type="submit" class="btn btn-primary">Envoyer</button>
 </form>
-
-<!-- Affichage du bloc de succès -->
 <?php else: ?>
     <div class="alert alert-success" role="alert">
-
-        <!-- Souhaiter la bienvenue -->
-        Bonjour et bienvenue sur le site <?php echo $_SESSION['LOGGED_USER']; ?>
+        Bonjour <?php echo($loggedUser['email']); ?> !
     </div>
 <?php endif; ?>
